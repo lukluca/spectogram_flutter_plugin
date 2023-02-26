@@ -1,6 +1,6 @@
-# spectogram
+# spectogram_flutter_plugin
 
-A new Flutter plugin project.
+A Flutter Plugin for display a spectrogram.
 
 ## Getting Started
 
