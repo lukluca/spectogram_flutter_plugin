@@ -55,14 +55,18 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    private func sendNull(result: @escaping FlutterResult) {
+        send(result, nil)
+    }
+    
     private func configureWhiteBackground(result: @escaping FlutterResult) {
         hasBlackBackground = false
-        send(result, nil)
+        sendNull(result: result)
     }
     
     private func configureBlackBackground(result: @escaping FlutterResult) {
         hasBlackBackground = true
-        send(result, nil)
+        sendNull(result: result)
     }
     
     private func setWidget(result: @escaping FlutterResult) {
@@ -76,10 +80,10 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
                     return
                 }
                 
-                self.send(result, nil)
+                self.sendNull(result: result)
             }
         } else {
-            send(result, nil)
+            sendNull(result: result)
         }
     }
     
@@ -114,7 +118,7 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        send(result, nil)
+        sendNull(result: result)
     }
     
     private func stop(result: @escaping FlutterResult) {
@@ -126,7 +130,7 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        send(result, nil)
+        sendNull(result: result)
     }
     
     private func reset(result: @escaping FlutterResult) {
@@ -138,7 +142,7 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        send(result, nil)
+        sendNull(result: result)
     }
     
     private func make(from error: SpectrogramError) -> FlutterError {

@@ -1,24 +1,26 @@
 package it.lukluca.spectogram
 
 import android.content.Context
-import android.graphics.Color
 import android.view.View
-import android.widget.TextView
 import io.flutter.plugin.platform.PlatformView
+import it.lukluca.spectogram.Misc.getFftResolution
+import it.lukluca.spectogram.Misc.getSamplingRate
 
-internal class SpectogramView(context: Context, id: Int, creationParams: Map<String?, Any?>?) : PlatformView {
-    private val textView: TextView
+internal class SpectogramView(context: Context) : PlatformView {
+
+    private val frequencyView: FrequencyView
 
     override fun getView(): View {
-        return textView
+        return frequencyView
     }
 
     override fun dispose() {}
 
     init {
-        textView = TextView(context)
-        textView.textSize = 72f
-        textView.setBackgroundColor(Color.rgb(255, 255, 255))
-        textView.text = "Kate is beautifully"
+
+        frequencyView = FrequencyView(context)
+        frequencyView.id = R.id.frequency_view
+        frequencyView.setFFTResolution(getFftResolution(context))
+        frequencyView.setSamplingRate(getSamplingRate(context))
     }
 }
