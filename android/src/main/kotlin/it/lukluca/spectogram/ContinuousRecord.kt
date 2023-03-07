@@ -86,17 +86,10 @@ class ContinuousRecord
     }
 
     /**
-     * Listener prototype used in the @method start
-     */
-    interface OnBufferReadyListener {
-        fun onBufferReady(buffer: ShortArray?)
-    }
-
-    /**
      * Start recording in a independent thread
      * @param listener is call every time a sample is ready
      */
-    fun start(listener: (ShortArray?) -> Unit) {
+    fun start(listener: (ShortArray) -> Unit) {
         if (isRun) {
             return
         }
@@ -108,7 +101,7 @@ class ContinuousRecord
             val thread = Thread {
                 while (isRun) {
                     it.read(recordBuffer, 0, bufferLength)
-                    listener.onBufferReady(recordBuffer)
+                    listener(recordBuffer)
                 }
             }
             this.thread = thread

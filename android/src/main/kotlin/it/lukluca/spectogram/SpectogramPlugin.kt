@@ -105,10 +105,8 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   private fun startRecording() {
-    continuousRecord?.start { recordBuffer: ShortArray? ->
-      if (recordBuffer != null) {
-        this.getTrunks(recordBuffer)
-      }
+    continuousRecord?.start { recordBuffer: ShortArray ->
+      this.getTrunks(recordBuffer)
     }
   }
 
