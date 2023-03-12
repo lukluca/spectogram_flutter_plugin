@@ -49,4 +49,11 @@ object Misc {
             context.resources.getInteger(R.integer.preferences_sampling_rate_default_value)
         )
     }
+
+    fun getWindowType(context: Context): String? {
+        return getPreference(
+            context,
+            "window_type",
+            context.getString(R.string.preferences_window_type_default_value))
+    }
 }

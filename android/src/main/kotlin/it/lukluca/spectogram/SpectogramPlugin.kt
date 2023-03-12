@@ -1,5 +1,6 @@
 package it.lukluca.spectogram
 
+import android.content.pm.PackageManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -7,30 +8,22 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import it.lukluca.spectogram.Misc.getFftResolution
-import it.lukluca.spectogram.Misc.getSamplingRate
-import kotlin.properties.Delegates
-
+import io.flutter.plugin.common.PluginRegistry
 
 /** SpectogramPlugin */
-class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
+class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.RequestPermissionsResultListener {
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
   /// when the Flutter Engine is detached from the Activity
   private lateinit var channel : MethodChannel
-  private var fftResolution by Delegates.notNull<Int>()
-  private var bufferStack // Store trunks of buffers
-          : ArrayList<ShortArray> = ArrayList()
-
-  private lateinit var fftBuffer: ShortArray
+  private lateinit var controller: SpectogramController
 
   private var frequencyView: FrequencyView? = null
-  private var continuousRecord: ContinuousRecord? = null
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    fftResolution = getFftResolution(flutterPluginBinding.applicationContext)
-    fftBuffer = ShortArray(fftResolution)
+
+    controller = SpectogramController(flutterPluginBinding.applicationContext)
 
     flutterPluginBinding.platformViewRegistry.registerViewFactory("SpectogramView", SpectogramViewFactory())
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "spectogram")
@@ -44,7 +37,7 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
       "configureBlackBackground" -> print("x == 2")
       "setWidget" -> setWidget(result)
       "start" -> start(result)
-      "stop" -> print("x == 2")
+      "stop" -> stop(result)
       "reset" -> print("x == 2")
       else -> {
         result.notImplemented()
@@ -58,6 +51,11 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
 
   private fun start(result: Result) {
     startRecording()
+    sendNullResult(result)
+  }
+
+  private fun stop(result: Result) {
+    stopRecording()
     sendNullResult(result)
   }
 
@@ -85,66 +83,45 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     resetProperties()
   }
 
-  private fun setProperties(binding: ActivityPluginBinding) {
-    frequencyView = binding.activity.findViewById(R.id.frequency_view)
-    val context = binding.activity.applicationContext
-    continuousRecord = ContinuousRecord(getSamplingRate(context), context)
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray
+  ): Boolean {
 
-    continuousRecord?.let {
-      val n = fftResolution
-      val l: Int = it.bufferLength / (n / 2)
-      for (i in 0 until l + 1) { //+1 because the last one has to be used again and sent to first position
-        bufferStack.add(ShortArray(n / 2)) // preallocate to avoid new within processing loop
+    when (requestCode) {
+      SpectogramController.MY_PERMISSIONS_REQUEST_RECORD_AUDIO -> {
+
+        if (grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                  controller.loadEngine()
+        }
+
+        return true
       }
     }
+    return false
+  }
+
+  private fun setProperties(binding: ActivityPluginBinding) {
+    frequencyView = binding.activity.findViewById(R.id.frequency_view)
+    binding.addRequestPermissionsResultListener(this)
+    val context = binding.activity.applicationContext
+    controller.setProperties(binding.activity, context)
   }
 
   private fun resetProperties() {
     frequencyView = null
-    continuousRecord = null
+    controller.resetProperties()
   }
 
   private fun startRecording() {
-    continuousRecord?.start { recordBuffer: ShortArray ->
-      this.getTrunks(recordBuffer)
+    frequencyView?.let {
+      controller.start(it)
     }
   }
 
   private fun stopRecording() {
-    continuousRecord?.stop()
-  }
-
-  private fun getTrunks(recordBuffer: ShortArray) {
-    val n = fftResolution
-
-    // Trunks are consecutive n/2 length samples
-    for (i in 0 until (bufferStack.size.minus(1)))
-      bufferStack[i + 1].let {
-        System.arraycopy(
-          recordBuffer,
-          n / 2 * i,
-           it,
-          0,
-          n / 2
-      )
-    }
-
-    // Build n length buffers for processing
-    // Are build from consecutive trunks
-    for (i in 0 until (bufferStack.size.minus(1))) {
-      bufferStack[i].let { System.arraycopy(it, 0, fftBuffer, 0, n / 2) }
-      bufferStack[i + 1].let { System.arraycopy(it, 0, fftBuffer, n / 2, n / 2) }
-      process()
-    }
-
-    // Last item has not yet fully be used (only its first half)
-    // Move it to first position in arraylist so that its last half is used
-    val first: ShortArray = bufferStack[0]
-    val last: ShortArray = bufferStack[bufferStack.size - 1]
-    System.arraycopy(last, 0, first, 0, n / 2)
-  }
-
-  private fun process() {
-
+    controller.stop()
   }
 }

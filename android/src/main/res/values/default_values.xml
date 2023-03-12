@@ -2,6 +2,7 @@
 <resources>
     <string name="preferences_color_scale_default_value">Fire</string>
     <string name="preferences_frequency_scale_default_value">Linear</string>
+    <string name="preferences_window_type_default_value">Hamming</string>
     <integer name="preferences_fft_resolution_default_value">1024</integer>
     <integer name="preferences_sampling_rate_default_value">44100</integer>
 </resources>
