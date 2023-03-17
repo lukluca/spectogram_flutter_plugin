@@ -3,8 +3,8 @@ package it.lukluca.spectogram
 import android.Manifest
 import android.app.Activity
 import android.content.Context
-import android.content.DialogInterface
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -40,6 +40,8 @@ class SpectogramController(context: Context) {
 
     fun setProperties(activity: Activity, context: Context) {
 
+        Log.v("SpectogramController", "setProperties")
+
         this.activity = activity
         this.context = context
 
@@ -66,6 +68,7 @@ class SpectogramController(context: Context) {
                 permission
             ) == PackageManager.PERMISSION_GRANTED -> {
                 // You can use the API that requires the permission.
+                Log.i("SpectogramController", "PERMISSION_GRANTED")
                 loadEngine()
             }
 
@@ -87,6 +90,7 @@ class SpectogramController(context: Context) {
                 dialog.show()
 
             } else -> {
+                Log.i("SpectogramController", "requestPermissions")
                 // You can directly ask for the permission.
                 ActivityCompat.requestPermissions(
                     activity,

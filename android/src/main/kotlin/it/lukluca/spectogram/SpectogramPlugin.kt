@@ -1,6 +1,8 @@
 package it.lukluca.spectogram
 
+import android.app.Activity
 import android.content.pm.PackageManager
+import android.util.Log
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -23,33 +25,50 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginR
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
 
+    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "spectogram")
+    channel.setMethodCallHandler(this)
+
     controller = SpectogramController(flutterPluginBinding.applicationContext)
 
     flutterPluginBinding.platformViewRegistry.registerViewFactory("SpectogramView", SpectogramViewFactory())
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "spectogram")
-    channel.setMethodCallHandler(this)
+  }
+
+  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    channel.setMethodCallHandler(null)
   }
 
   override fun onMethodCall(call: MethodCall, result: Result) {
 
     when (call.method) {
-      "configureWhiteBackground" -> print("x == 1")
-      "configureBlackBackground" -> print("x == 2")
+      "configureWhiteBackground" -> configureWhiteBackground(result)
+      "configureBlackBackground" -> configureBlackBackground(result)
       "setWidget" -> setWidget(result)
       "start" -> start(result)
       "stop" -> stop(result)
-      "reset" -> print("x == 2")
+      "reset" -> reset(result)
       else -> {
         result.notImplemented()
       }
     }
   }
 
+  private fun configureWhiteBackground(result: Result) {
+    Log.v("SpectogramPlugin", "configureWhiteBackground")
+    sendNullResult(result)
+  }
+
+  private fun configureBlackBackground(result: Result) {
+    Log.v("SpectogramPlugin", "configureBlackBackground")
+    sendNullResult(result)
+  }
+
   private fun setWidget(result: Result) {
+    Log.v("SpectogramPlugin", "setWidget")
     sendNullResult(result)
   }
 
   private fun start(result: Result) {
+    Log.v("SpectogramPlugin", "start")
     startRecording()
     sendNullResult(result)
   }
@@ -59,15 +78,17 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginR
     sendNullResult(result)
   }
 
+  private fun reset(result: Result) {
+    Log.v("SpectogramPlugin", "reset")
+    sendNullResult(result)
+  }
+
   private fun sendNullResult(result: Result) {
     result.success(null)
   }
 
-  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-    channel.setMethodCallHandler(null)
-  }
-
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    Log.v("SpectogramPlugin", "onAttachedToActivity")
     setProperties(binding)
   }
 
@@ -76,6 +97,7 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginR
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    Log.v("SpectogramPlugin", "onReattachedToActivityForConfigChanges")
     setProperties(binding)
   }
 
@@ -104,10 +126,14 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginR
   }
 
   private fun setProperties(binding: ActivityPluginBinding) {
-    frequencyView = binding.activity.findViewById(R.id.frequency_view)
     binding.addRequestPermissionsResultListener(this)
-    val context = binding.activity.applicationContext
-    controller.setProperties(binding.activity, context)
+    setProperties(binding.activity)
+  }
+
+  private fun setProperties(activity: Activity) {
+    frequencyView = activity.findViewById(R.id.frequency_view)
+    val context = activity.applicationContext
+    controller.setProperties(activity, context)
   }
 
   private fun resetProperties() {
