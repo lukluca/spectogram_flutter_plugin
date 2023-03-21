@@ -25,12 +25,12 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginR
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
 
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "spectogram")
-    channel.setMethodCallHandler(this)
-
     controller = SpectogramController(flutterPluginBinding.applicationContext)
 
     flutterPluginBinding.platformViewRegistry.registerViewFactory("SpectogramView", SpectogramViewFactory())
+
+    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "spectogram")
+    channel.setMethodCallHandler(this)
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
