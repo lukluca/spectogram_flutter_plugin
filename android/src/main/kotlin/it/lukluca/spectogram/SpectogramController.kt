@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import it.lukluca.spectogram.Misc.getFftResolution
 import it.lukluca.spectogram.Misc.getSamplingRate
 import it.lukluca.spectogram.Misc.getWindowType
+import net.galmiza.android.engine.sound.SoundEngine
 import kotlin.math.ln
 
 

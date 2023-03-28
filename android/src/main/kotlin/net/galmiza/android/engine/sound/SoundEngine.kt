@@ -1,4 +1,4 @@
-package it.lukluca.spectogram
+package net.galmiza.android.engine.sound
 
 class SoundEngine {
     external fun fft(var1: FloatArray?, var2: FloatArray?, var3: Int, var4: Int)
