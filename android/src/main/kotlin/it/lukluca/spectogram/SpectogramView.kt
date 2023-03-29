@@ -17,7 +17,6 @@ internal class SpectogramView(context: Context) : PlatformView {
     override fun dispose() {}
 
     init {
-
         frequencyView = FrequencyView(context)
         frequencyView.id = R.id.frequency_view
         frequencyView.setFFTResolution(getFftResolution(context))
