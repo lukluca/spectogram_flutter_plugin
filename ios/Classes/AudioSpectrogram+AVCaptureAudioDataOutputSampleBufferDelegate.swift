@@ -68,21 +68,21 @@ extension AudioSpectrogram: AVCaptureAudioDataOutputSampleBufferDelegate {
     func configureCaptureSession() {
     
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
-            case .authorized:
-                    break
-            case .notDetermined:
-                sessionQueue.suspend()
-                AVCaptureDevice.requestAccess(for: .audio,
-                                              completionHandler: { [weak self] granted in
-                    if !granted {
-                        self?.onError?(.requiresMicrophoneAccess)
-                    } else {
-                        self?.configureCaptureSession()
-                        self?.sessionQueue.resume()
-                    }
-                })
-                return
-            default:
+        case .authorized:
+            break
+        case .notDetermined:
+            sessionQueue.suspend()
+            AVCaptureDevice.requestAccess(for: .audio,
+                                          completionHandler: { [weak self] granted in
+                if !granted {
+                    self?.onError?(.requiresMicrophoneAccess)
+                } else {
+                    self?.configureCaptureSession()
+                    self?.sessionQueue.resume()
+                }
+            })
+            return
+        default:
             onError?(.requiresMicrophoneAccess)
         }
         

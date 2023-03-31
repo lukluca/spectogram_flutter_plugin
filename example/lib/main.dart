@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
     if (_started) {
       _spectogramPlugin.stop();
     } else {
-      _spectogramPlugin.start();
+      _spectogramPlugin.start(); // TODO: make start wait an error. In case of error, show dialog
     }
 
     setState(() {

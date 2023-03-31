@@ -9,6 +9,9 @@ import Flutter
 import UIKit
 
 class SpectogramNativeViewFactory: NSObject, FlutterPlatformViewFactory {
+    
+    var didCreate: ((SpectogramView) -> Void)?
+    
     private var messenger: FlutterBinaryMessenger
     
     init(messenger: FlutterBinaryMessenger) {
@@ -16,16 +19,19 @@ class SpectogramNativeViewFactory: NSObject, FlutterPlatformViewFactory {
         super.init()
     }
     
-    func create(
-        withFrame frame: CGRect,
-        viewIdentifier viewId: Int64,
-        arguments args: Any?
-    ) -> FlutterPlatformView {
-        return SpectogramNativeView(
-            frame: frame,
-            viewIdentifier: viewId,
-            arguments: args,
-            binaryMessenger: messenger)
+    func create(withFrame frame: CGRect,
+                viewIdentifier viewId: Int64,
+                arguments args: Any?) -> FlutterPlatformView {
+        
+        let native = SpectogramNativeView(frame: frame,
+                                          viewIdentifier: viewId,
+                                          arguments: args,
+                                          binaryMessenger: messenger)
+        if let view = native.view() as? SpectogramView {
+            didCreate?(view)
+        }
+        
+        return native
     }
 }
 

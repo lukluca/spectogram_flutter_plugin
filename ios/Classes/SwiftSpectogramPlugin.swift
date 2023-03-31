@@ -3,21 +3,26 @@ import UIKit
 
 public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
     
-    private enum ErrorCode: String {
-        case controllerIsNil
-    }
-    
     private lazy var controller: Spectrogram = {
+        
+        let contro: Spectrogram
+        
         #if targetEnvironment(simulator)
-        return SimulatorSpectogramController()
+        contro = SimulatorSpectogramController()
         #else
-        return SpectrogramController()
+        contro = SpectrogramController()
         #endif
+        
+        contro.onError = { [weak self] error in
+            self?.onError = error
+        }
+        
+        return contro
     }()
     
     private var hasBlackBackground = true
     
-    private var onError = false
+    private var onError: SpectrogramError?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
                 
@@ -25,8 +30,21 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
         registrar.register(factory, withId: "SpectogramView")
         
         let channel = FlutterMethodChannel(name: "spectogram", binaryMessenger: registrar.messenger())
+        
         let instance = SwiftSpectogramPlugin()
+        factory.didCreate = { [weak instance] view in
+            instance?.controller.view = view
+            instance?.didSetView?()
+        }
+        
         registrar.addMethodCallDelegate(instance, channel: channel)
+    }
+    
+    public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
+        controller.view = nil
+        controller.onError = nil
+        didSetView = nil
+        onError = nil
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -55,6 +73,20 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    private func sendErrorIfNeeded(result: @escaping FlutterResult) -> Bool {
+        if let onError {
+            send(result: result, error: onError)
+            self.onError = nil
+            return true
+        }
+        
+        return false
+    }
+    
+    private func send(result: @escaping FlutterResult, error: SpectrogramError) {
+        send(result, make(from: error))
+    }
+    
     private func sendNull(result: @escaping FlutterResult) {
         send(result, nil)
     }
@@ -70,63 +102,39 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
     }
     
     private func setWidget(result: @escaping FlutterResult) {
-        
-        if controller.view == nil {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.controller.view = self.getSpectogramView()
-                
-                if self.controller.view == nil {
-                    self.setWidget(result: result)
-                    return
-                }
-                
-                self.sendNull(result: result)
-            }
-        } else {
-            sendNull(result: result)
-        }
+        sendNull(result: result)
     }
     
-    private func getSpectogramView() -> SpectogramView? {
-        let window: UIWindow?
-        
-        if #available(iOS 15.0, *) {
-            window = UIApplication
-                .shared
-                .connectedScenes
-                .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-                .first
-        } else {
-            window = UIApplication
-                .shared
-                .connectedScenes
-                .flatMap { ($0 as? UIWindowScene)?.windows ?? [] }
-                .first { $0.isKeyWindow }
-        }
-        
-        let topController = UIApplication.topViewController(controller: window?.rootViewController)
-        
-        return topController?.view.allSubViewsOf(type: SpectogramView.self).first
-    }
+    private var didSetView: (() -> ())?
     
     private func start(result: @escaping FlutterResult) {
-       
-        controller.start(darkMode: hasBlackBackground)
         
-        if onError {
-            onError = false
-            return
+        func start() {
+            //TODO add to start completion block
+            controller.start(darkMode: hasBlackBackground)
+            
+            if sendErrorIfNeeded(result: result) {
+                return
+            }
+            
+            sendNull(result: result)
         }
         
-        sendNull(result: result)
+        if controller.view != nil {
+            start()
+        } else {
+            didSetView = {
+                start()
+            }
+        }
     }
     
     private func stop(result: @escaping FlutterResult) {
     
+        //TODO maybe add to stop completion block
         controller.stop()
         
-        if onError {
-            onError = false
+        if sendErrorIfNeeded(result: result) {
             return
         }
         
@@ -135,10 +143,10 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
     
     private func reset(result: @escaping FlutterResult) {
         
+        //TODO maybe add to reset completion block
         controller.reset()
         
-        if onError {
-            onError = false
+        if sendErrorIfNeeded(result: result) {
             return
         }
         
@@ -157,43 +165,8 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
                                 details: nil)
         case .viewIsNil:
             return FlutterError(code: "viewIsNil",
-                                message: "Did you miss to call 'setWidget' func?",
+                                message: "There are some developer problems",
                                 details: nil)
         }
-    }
-}
-
-
-private extension UIApplication {
-    class func topViewController(controller: UIViewController?) -> UIViewController? {
-        if let navigationController = controller as? UINavigationController {
-            return topViewController(controller: navigationController.visibleViewController)
-        }
-        if let tabController = controller as? UITabBarController {
-            if let selected = tabController.selectedViewController {
-                return topViewController(controller: selected)
-            }
-        }
-        if let presented = controller?.presentedViewController {
-            return topViewController(controller: presented)
-        }
-        return controller
-    }
-}
-
-private extension UIView {
-    
-    /** This is a function to get subViews of a particular type from view recursively. It would look recursively in all subviews and return back the subviews of the type T */
-    func allSubViewsOf<T : UIView>(type : T.Type) -> [T]{
-        var all = [T]()
-        func getSubview(view: UIView) {
-            if let aView = view as? T{
-                all.append(aView)
-            }
-            guard view.subviews.count>0 else { return }
-            view.subviews.forEach{ getSubview(view: $0) }
-        }
-        getSubview(view: self)
-        return all
     }
 }

@@ -11,6 +11,7 @@ protocol Spectrogram :AnyObject {
     var rawAudioData: [Int16] { get }
     var frequencies: [Float] { get }
     var view: SpectogramView? { get set }
+    var onError: ((SpectrogramError) -> Void)? { get set }
     
     func start(darkMode: Bool, rawAudioData: [Int16])
     func start(darkMode: Bool)
@@ -28,6 +29,7 @@ class SimulatorSpectogramController {
     private var timer: Timer?
     
     var view: SpectogramView?
+    var onError: ((SpectrogramError) -> Void)?
     
     func start(darkMode: Bool) {
         stop()
