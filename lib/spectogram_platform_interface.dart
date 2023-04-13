@@ -31,10 +31,6 @@ abstract class SpectogramPlatform extends PlatformInterface {
     throw UnimplementedError('configureBlackBackground() has not been implemented.');
   }
 
-  Future<void> setWidget() async {
-    throw UnimplementedError('setWidget has not been implemented.');
-  }
-
   Future<void> start() {
     throw UnimplementedError('start() has not been implemented.');
   }

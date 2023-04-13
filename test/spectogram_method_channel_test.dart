@@ -18,7 +18,7 @@ void main() {
     channel.setMockMethodCallHandler(null);
   });
 
-  test('setWidget', () async {
-    await platform.setWidget();
+  test('start', () async {
+    await platform.start();
   });
 }

@@ -9,9 +9,6 @@ class MockSpectogramPlatform
     implements SpectogramPlatform {
 
   @override
-  Future<void> setWidget() => Future.value();
-
-  @override
   Future<void> configureBlackBackground() => Future.value();
 
   @override
@@ -34,12 +31,8 @@ void main() {
     expect(initialPlatform, isInstanceOf<MethodChannelSpectogram>());
   });
 
-  test('setWidget', () async {
+  test('start', () async {
     Spectogram spectogramPlugin = Spectogram();
-    MockSpectogramPlatform fakePlatform = MockSpectogramPlatform();
-    SpectogramPlatform.instance = fakePlatform;
-
-    await spectogramPlugin.setWidget();
-
+    await spectogramPlugin.start();
   });
 }

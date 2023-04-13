@@ -7,14 +7,21 @@
 
 import Foundation
 
+enum SpectogramError {
+    case requiresMicrophoneAccess
+    case cantCreateMicrophone
+    case viewIsNil
+}
+
+typealias SpectogramCompletion = (SpectogramError?) -> Void
+
 protocol Spectrogram :AnyObject {
     var rawAudioData: [Int16] { get }
     var frequencies: [Float] { get }
     var view: SpectogramView? { get set }
-    var onError: ((SpectrogramError) -> Void)? { get set }
-    
+   
     func start(darkMode: Bool, rawAudioData: [Int16])
-    func start(darkMode: Bool)
+    func start(darkMode: Bool, completion: @escaping SpectogramCompletion)
     func stop()
     func reset()
 }
@@ -29,9 +36,8 @@ class SimulatorSpectogramController {
     private var timer: Timer?
     
     var view: SpectogramView?
-    var onError: ((SpectrogramError) -> Void)?
     
-    func start(darkMode: Bool) {
+    func start(darkMode: Bool, completion: @escaping SpectogramCompletion) {
         stop()
         timer = Timer.scheduledTimer(timeInterval: 0.1,
                                      target: self,

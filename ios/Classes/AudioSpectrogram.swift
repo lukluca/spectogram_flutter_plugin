@@ -15,8 +15,6 @@ final class AudioSpectrogram: CALayer {
     var didAppendFrequencies: (([Float]) -> Void)?
     var didAppendAudioData: (([Int16]) -> Void)?
     
-    var onError: ((SpectrogramError) -> Void)?
-
     // MARK: Initialization
     
     override init() {
@@ -33,10 +31,10 @@ final class AudioSpectrogram: CALayer {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure() {
+    func configure(completion: @escaping SpectogramCompletion) {
         contentsGravity = .resize
         
-        configureCaptureSession()
+        configureCaptureSession(completion: completion)
         audioOutput.setSampleBufferDelegate(self,
                                             queue: captureQueue)
     }

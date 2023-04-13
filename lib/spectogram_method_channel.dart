@@ -20,11 +20,6 @@ class MethodChannelSpectogram extends SpectogramPlatform {
   }
 
   @override
-  Future<void> setWidget() async {
-    return await methodChannel.invokeMethod('setWidget');
-  }
-
-  @override
   Future<void> start() {
     return methodChannel.invokeMethod<void>('start');
   }

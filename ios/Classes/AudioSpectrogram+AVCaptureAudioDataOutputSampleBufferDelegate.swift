@@ -65,7 +65,7 @@ extension AudioSpectrogram: AVCaptureAudioDataOutputSampleBufferDelegate {
         createAudioSpectrogram()
     }
     
-    func configureCaptureSession() {
+    func configureCaptureSession(completion: @escaping SpectogramCompletion) {
     
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized:
@@ -75,15 +75,16 @@ extension AudioSpectrogram: AVCaptureAudioDataOutputSampleBufferDelegate {
             AVCaptureDevice.requestAccess(for: .audio,
                                           completionHandler: { [weak self] granted in
                 if !granted {
-                    self?.onError?(.requiresMicrophoneAccess)
+                    completion(.requiresMicrophoneAccess)
                 } else {
-                    self?.configureCaptureSession()
+                    self?.configureCaptureSession(completion: completion)
                     self?.sessionQueue.resume()
                 }
             })
             return
         default:
-            onError?(.requiresMicrophoneAccess)
+            completion(.requiresMicrophoneAccess)
+            return
         }
         
         captureSession.beginConfiguration()
@@ -99,7 +100,7 @@ extension AudioSpectrogram: AVCaptureAudioDataOutputSampleBufferDelegate {
                                                      for: .audio,
                                                      position: .unspecified),
             let microphoneInput = try? AVCaptureDeviceInput(device: microphone) else {
-            onError?(.cantCreateMicrophone)
+            completion(.cantCreateMicrophone)
             captureSession.commitConfiguration()
             return
         }
@@ -109,6 +110,7 @@ extension AudioSpectrogram: AVCaptureAudioDataOutputSampleBufferDelegate {
         }
         
         captureSession.commitConfiguration()
+        completion(nil)
     }
     
     /// Starts the audio spectrogram.

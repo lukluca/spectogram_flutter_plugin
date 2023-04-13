@@ -52,7 +52,6 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginR
     when (call.method) {
       "configureWhiteBackground" -> configureWhiteBackground(result)
       "configureBlackBackground" -> configureBlackBackground(result)
-      "setWidget" -> setWidget(result)
       "start" -> start(result)
       "stop" -> stop(result)
       "reset" -> reset(result)
@@ -72,26 +71,9 @@ class SpectogramPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginR
     sendNullResult(result)
   }
 
-  private fun setWidget(result: Result) {
-    Log.v("SpectogramPlugin", "setWidget")
-    sendNullResult(result)
-  }
-
-  override fun onCreateView() {
+  override fun onCreateView(view: FrequencyView) {
     Log.v("SpectogramPlugin", "onCreateView")
-    setFrequencyViewIfNotNull()
-  }
-
-  private fun setFrequencyViewIfNotNull() {
-    if (frequencyView != null) {
-      return
-    }
-
-    frequencyView = activity?.findViewById(R.id.frequency_view)
-
-    Executors.newSingleThreadScheduledExecutor().schedule({
-      setFrequencyViewIfNotNull()
-    }, 0.2.toLong(), TimeUnit.SECONDS)
+    frequencyView = view
   }
 
   private fun start(result: Result) {

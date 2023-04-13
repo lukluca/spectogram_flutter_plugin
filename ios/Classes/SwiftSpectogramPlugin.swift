@@ -8,21 +8,15 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
         let contro: Spectrogram
         
         #if targetEnvironment(simulator)
-        contro = SimulatorSpectogramController()
+        contro = SpectrogramController()
         #else
         contro = SpectrogramController()
         #endif
-        
-        contro.onError = { [weak self] error in
-            self?.onError = error
-        }
         
         return contro
     }()
     
     private var hasBlackBackground = true
-    
-    private var onError: SpectrogramError?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
                 
@@ -42,9 +36,7 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
     
     public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
         controller.view = nil
-        controller.onError = nil
         didSetView = nil
-        onError = nil
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -53,8 +45,6 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
             configureWhiteBackground(result: result)
         case "configureBlackBackground":
             configureBlackBackground(result: result)
-        case "setWidget":
-            setWidget(result: result)
         case "start":
             start(result: result)
         case "stop":
@@ -73,17 +63,16 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    private func sendErrorIfNeeded(result: @escaping FlutterResult) -> Bool {
-        if let onError {
-            send(result: result, error: onError)
-            self.onError = nil
+    private func sendIfNotNil(error: SpectogramError?, over result: @escaping FlutterResult) -> Bool {
+        if let error {
+            send(result: result, error: error)
             return true
         }
         
         return false
     }
     
-    private func send(result: @escaping FlutterResult, error: SpectrogramError) {
+    private func send(result: @escaping FlutterResult, error: SpectogramError) {
         send(result, make(from: error))
     }
     
@@ -101,23 +90,22 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
         sendNull(result: result)
     }
     
-    private func setWidget(result: @escaping FlutterResult) {
-        sendNull(result: result)
-    }
-    
     private var didSetView: (() -> ())?
     
     private func start(result: @escaping FlutterResult) {
         
         func start() {
             //TODO add to start completion block
-            controller.start(darkMode: hasBlackBackground)
-            
-            if sendErrorIfNeeded(result: result) {
-                return
+            controller.start(darkMode: hasBlackBackground) { [weak self] error in
+                guard let self else {
+                    return
+                }
+                if self.sendIfNotNil(error: error, over: result) {
+                    return
+                }
+                
+                self.sendNull(result: result)
             }
-            
-            sendNull(result: result)
         }
         
         if controller.view != nil {
@@ -130,30 +118,20 @@ public class SwiftSpectogramPlugin: NSObject, FlutterPlugin {
     }
     
     private func stop(result: @escaping FlutterResult) {
-    
-        //TODO maybe add to stop completion block
+
         controller.stop()
-        
-        if sendErrorIfNeeded(result: result) {
-            return
-        }
         
         sendNull(result: result)
     }
     
     private func reset(result: @escaping FlutterResult) {
         
-        //TODO maybe add to reset completion block
         controller.reset()
-        
-        if sendErrorIfNeeded(result: result) {
-            return
-        }
         
         sendNull(result: result)
     }
     
-    private func make(from error: SpectrogramError) -> FlutterError {
+    private func make(from error: SpectogramError) -> FlutterError {
         switch error {
         case .requiresMicrophoneAccess:
             return FlutterError(code: "requiresMicrophoneAccess",

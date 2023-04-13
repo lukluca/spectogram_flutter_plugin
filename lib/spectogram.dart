@@ -11,10 +11,6 @@ class Spectogram {
     return SpectogramPlatform.instance.configureBlackBackground();
   }
 
-  Future<void> setWidget() async {
-    return await SpectogramPlatform.instance.setWidget();
-  }
-
   Future<void> start() {
     return SpectogramPlatform.instance.start();
   }

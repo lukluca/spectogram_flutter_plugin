@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
 import 'package:spectogram/spectogram.dart';
 import 'package:spectogram/spectogram_widget.dart';
+import 'package:flutter_platform_alert/flutter_platform_alert.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,10 +26,6 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     _started = false;
-
-    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-      _spectogramPlugin.setWidget();
-    });
   }
 
   final _spectogramPlugin = Spectogram();
@@ -49,7 +46,22 @@ class _MyAppState extends State<MyApp> {
     if (_started) {
       _spectogramPlugin.stop();
     } else {
-      _spectogramPlugin.start(); // TODO: make start wait an error. In case of error, show dialog
+      _spectogramPlugin.start().catchError((error, stackTrace) async {
+        if (error is PlatformException) {
+          String code = error.code;
+          if (code == "requiresMicrophoneAccess") {
+            //TODO: Localize
+            final result = await FlutterPlatformAlert.showCustomAlert(windowTitle: "Error",
+                text: "Spectogram needs access to microphone!",
+                positiveButtonTitle: "Ok",
+                neutralButtonTitle: "Open settings");
+
+            if (result == CustomButton.neutralButton) {
+              //TODO: open settings
+            }
+          }
+        }
+      });
     }
 
     setState(() {

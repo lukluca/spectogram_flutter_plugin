@@ -8,7 +8,7 @@ import io.flutter.plugin.platform.PlatformViewFactory
 
 interface SpectogramViewHandler {
     @UiThread
-    fun onCreateView()
+    fun onCreateView(view: FrequencyView)
 }
 
 class SpectogramViewFactory : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
@@ -17,7 +17,12 @@ class SpectogramViewFactory : PlatformViewFactory(StandardMessageCodec.INSTANCE)
 
     override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
         val view = SpectogramView(context)
-        handler?.onCreateView()
+
+        val frequencyView = view.view
+        if (frequencyView is FrequencyView) {
+            handler?.onCreateView(frequencyView)
+        }
+
         return view
     }
 

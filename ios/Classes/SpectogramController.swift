@@ -7,12 +7,6 @@
 
 import Foundation
 
-enum SpectrogramError {
-    case requiresMicrophoneAccess
-    case cantCreateMicrophone
-    case viewIsNil
-}
-
 final class SpectrogramController {
     
     private var didLayoutSubviewsCalled = false
@@ -30,15 +24,12 @@ final class SpectrogramController {
     /// The audio spectrogram layer.
     private var audioSpectrogram: AudioSpectrogram?
     
-    var onError: ((SpectrogramError) -> Void)?
-    
     private(set) var frequencies = [Float]()
     private(set) var rawAudioData = [Int16]()
     
     //MARK: Start / Stop
     
-    func start(darkMode: Bool) {
-        setSpectrogram(darkMode: darkMode)
+    func start(darkMode: Bool, completion: @escaping SpectogramCompletion) {
         
         audioSpectrogram?.didAppendFrequencies = { [weak self] values in
             self?.frequencies.append(contentsOf: values)
@@ -48,13 +39,21 @@ final class SpectrogramController {
             self?.rawAudioData.append(contentsOf: values)
         }
         
-        audioSpectrogram?.startRunning()
+        setSpectrogram(darkMode: darkMode) { [weak self] error in
+            if let error {
+                completion(error)
+                return
+            }
+            
+            self?.audioSpectrogram?.startRunning()
+            completion(nil)
+        }
     }
     
     func start(darkMode: Bool, rawAudioData: [Int16]) {
         resetSpectrogram()
 
-        setSpectrogram(darkMode: darkMode)
+        setSpectrogram(darkMode: darkMode) {_ in }
         
         audioSpectrogram?.startRunning(rawAudioData: rawAudioData)
     }
@@ -72,14 +71,15 @@ final class SpectrogramController {
         audioSpectrogram?.removeFromSuperlayer()
     }
     
-    private func setSpectrogram(darkMode: Bool) {
+    private func setSpectrogram(darkMode: Bool, completion: @escaping SpectogramCompletion) {
         guard audioSpectrogram?.superlayer == nil else {
+            completion(nil)
             return
         }
         
         guard let view = view else {
-            DispatchQueue.main.async { [weak self] in
-                self?.onError?(.viewIsNil)
+            DispatchQueue.main.async {
+                completion(.viewIsNil)
             }
             return
         }
@@ -89,18 +89,19 @@ final class SpectrogramController {
         audioSpectrogram = spectogram
         bindSpectogram()
         
-        spectogram.configure()
-        
-        view.layer.addSublayer(spectogram)
+        spectogram.configure { error in
+            if let error {
+                completion(error)
+                return
+            }
+            
+            view.layer.addSublayer(spectogram)
+            completion(nil)
+            
+        }
     }
     
     private func bindSpectogram() {
-        audioSpectrogram?.onError = { [weak self] error in
-            DispatchQueue.main.async {
-                self?.onError?(error)
-            }
-        }
-        
         if let view = view {
             if didLayoutSubviewsCalled {
                 audioSpectrogram?.frame = view.frame
