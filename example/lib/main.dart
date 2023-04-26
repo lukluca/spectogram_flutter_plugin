@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:spectogram/spectogram.dart';
 import 'package:spectogram/spectogram_widget.dart';
 import 'package:flutter_platform_alert/flutter_platform_alert.dart';
+import 'package:app_settings/app_settings.dart';
 
 void main() {
   runApp(const MyApp());
@@ -50,6 +51,9 @@ class _MyAppState extends State<MyApp> {
         if (error is PlatformException) {
           String code = error.code;
           if (code == "requiresMicrophoneAccess") {
+            _spectogramPlugin.stop();
+            _toggleButtonState();
+
             //TODO: Localize
             final result = await FlutterPlatformAlert.showCustomAlert(windowTitle: "Error",
                 text: "Spectogram needs access to microphone!",
@@ -57,13 +61,17 @@ class _MyAppState extends State<MyApp> {
                 neutralButtonTitle: "Open settings");
 
             if (result == CustomButton.neutralButton) {
-              //TODO: open settings
+              AppSettings.openAppSettings();
             }
           }
         }
       });
     }
 
+    _toggleButtonState();
+  }
+
+  void _toggleButtonState() {
     setState(() {
       _started = !_started;
     });
